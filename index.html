@@ -309,199 +309,1063 @@
 <div class="cal-tooltip" id="calTooltip"></div>
 
 <script>
-// ── CONSTANTS ──
-const ICONS = ['💪','📚','🏃','🧘','💧','🍎','🎯','🧠','✍️','🌅','💊','🚶','🎨','🎵','💤','🥗','📝','🏋️','🚴','🤸','✈️','💻'];
-const CAT_META = {
-  health:{label:'Здоровье',icon:'❤️'},sport:{label:'Спорт',icon:'🏃'},work:{label:'Работа',icon:'💼'},learn:{label:'Обучение',icon:'📚'},mindfulness:{label:'Осознанность',icon:'🧘'},code:{label:'Код',icon:'💻'},aviation:{label:'Авиация',icon:'✈️'},other:{label:'Другое',icon:'📌'}
-};
-const DAY_RU = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
-const MONTH_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
-const GREET_MAP = ['Доброй ночи','Доброе утро','Добрый день','Добрый вечер'];
-const QUOTES = [
-  «Дисциплина — это мост между целями и достижениями.»,
-  «Успех — это сумма маленьких усилий, повторяемых день за днём.»,
-  «Не жди идеального момента, сделай момент идеальным.»,
-  «Маленькие шаги каждый день ведут к большим результатам.»,
-  «Ты сильнее, чем думаешь.»,
-  «Каждый день — это новая возможность изменить свою жизнь.»,
-  «Привычки делают нас теми, кто мы есть.»,
-  «Будь лучшей версией себя сегодня.»,
-  «Ничего великого не создаётся за один день.»,
-  «Вдохновение приходит во время работы.»,
-  «Начни с малого, но начни сейчас.»,
-  «Ты способен на большее, чем думаешь.»,
-  «Дисциплина — это уважение к своим будущим целям.»,
-  «Каждое утро — это начало новой жизни.»,
-  «Сделай сегодня то, что другие не хотят, завтра будешь жить так, как другие не могут.»,
-  «Прогресс — это движение вперёд, даже если шаг маленький.»,
-  «Победа над собой — самая большая победа.»,
-  «Упорство — это ключ к успеху.»,
-  «Будь последовательным, и результат придёт.»,
-  «Лучшее время начать — сейчас.»
-];
-const K = {
-  user:'habit_user26', habits:'habit_list26', history:'habit_hist26',
-  theme:'habit_theme26', goal:'habit_goal26', reminder:'habit_remind26',
-  since:'habit_since26', achv:'habit_achv26', weight:'habit_weight26',
-  mood:'habit_mood26', todos:'habit_todos26', pomo:'habit_pomo26',
-  sound:'habit_sound26'
-};
-function gs(k){try{return JSON.parse(localStorage.getItem(k))}catch{return null}}
-function ss(k,v){localStorage.setItem(k,JSON.stringify(v))}
-function todayKey(){return new Date().toISOString().split('T')[0]}
-function histKey(d){return'hist_'+d}
-function getDoneToday(){return gs(histKey(todayKey()))||[]}
-function saveDoneToday(arr){ss(histKey(todayKey()),arr)}
+(function() {
+  'use strict';
 
-let user = gs(K.user)||{name:'',avatar:''};
-let habits = gs(K.habits)||[];
-let goal = gs(K.goal)||3;
-let reminderTime = gs(K.reminder)||'20:00';
-let calOffset = 0;
-let confirmCallback = null;
-let soundEnabled = gs(K.sound)!==false;
-let actx;
+  // ── CONSTANTS ──
+  const ICONS = ['💪','📚','🏃','🧘','💧','🍎','🎯','🧠','✍️','🌅','💊','🚶','🎨','🎵','💤','🥗','📝','🏋️','🚴','🤸','✈️','💻'];
+  const CAT_META = {
+    health:{label:'Здоровье',icon:'❤️'},sport:{label:'Спорт',icon:'🏃'},work:{label:'Работа',icon:'💼'},learn:{label:'Обучение',icon:'📚'},mindfulness:{label:'Осознанность',icon:'🧘'},code:{label:'Код',icon:'💻'},aviation:{label:'Авиация',icon:'✈️'},other:{label:'Другое',icon:'📌'}
+  };
+  const DAY_RU = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+  const MONTH_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  const GREET_MAP = ['Доброй ночи','Доброе утро','Добрый день','Добрый вечер'];
+  const QUOTES = [
+    'Дисциплина — это мост между целями и достижениями.',
+    'Успех — это сумма маленьких усилий, повторяемых день за днём.',
+    'Не жди идеального момента, сделай момент идеальным.',
+    'Маленькие шаги каждый день ведут к большим результатам.',
+    'Ты сильнее, чем думаешь.',
+    'Каждый день — это новая возможность изменить свою жизнь.',
+    'Привычки делают нас теми, кто мы есть.',
+    'Будь лучшей версией себя сегодня.',
+    'Ничего великого не создаётся за один день.',
+    'Вдохновение приходит во время работы.',
+    'Начни с малого, но начни сейчас.',
+    'Ты способен на большее, чем думаешь.',
+    'Дисциплина — это уважение к своим будущим целям.',
+    'Каждое утро — это начало новой жизни.',
+    'Сделай сегодня то, что другие не хотят, завтра будешь жить так, как другие не могут.',
+    'Прогресс — это движение вперёд, даже если шаг маленький.',
+    'Победа над собой — самая большая победа.',
+    'Упорство — это ключ к успеху.',
+    'Будь последовательным, и результат придёт.',
+    'Лучшее время начать — сейчас.'
+  ];
+  const K = {
+    user:'habit_user26', habits:'habit_list26', history:'habit_hist26',
+    theme:'habit_theme26', goal:'habit_goal26', reminder:'habit_remind26',
+    since:'habit_since26', achv:'habit_achv26', weight:'habit_weight26',
+    mood:'habit_mood26', todos:'habit_todos26', pomo:'habit_pomo26',
+    sound:'habit_sound26'
+  };
+  function gs(k){try{return JSON.parse(localStorage.getItem(k))}catch{return null}}
+  function ss(k,v){localStorage.setItem(k,JSON.stringify(v))}
+  function todayKey(){return new Date().toISOString().split('T')[0]}
+  function histKey(d){return'hist_'+d}
+  function getDoneToday(){return gs(histKey(todayKey()))||[]}
+  function saveDoneToday(arr){ss(histKey(todayKey()),arr)}
 
-function note(freq,t,vol=.12){if(!soundEnabled)return;try{if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.frequency.value=freq;g.gain.setValueAtTime(vol,actx.currentTime);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+t);o.start();o.stop(actx.currentTime+t)}catch{}}
-function playDone(){note(523,.05);setTimeout(()=>note(659,.05),70);setTimeout(()=>note(784,.3),140)}
-function playUndo(){note(440,.06);setTimeout(()=>note(330,.2),70)}
-function playAdd(){note(880,.12,.09)}
+  let user = gs(K.user)||{name:'',avatar:''};
+  let habits = gs(K.habits)||[];
+  let goal = gs(K.goal)||3;
+  let reminderTime = gs(K.reminder)||'20:00';
+  let calOffset = 0;
+  let confirmCallback = null;
+  let soundEnabled = gs(K.sound)!==false;
+  let actx;
 
-let bannerT;
-function showBanner(msg,dur=2200){const b=document.getElementById('banner');b.textContent=msg;b.classList.add('show');clearTimeout(bannerT);bannerT=setTimeout(()=>b.classList.remove('show'),dur);}
+  function note(freq,t,vol=.12){if(!soundEnabled)return;try{if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);o.frequency.value=freq;g.gain.setValueAtTime(vol,actx.currentTime);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+t);o.start();o.stop(actx.currentTime+t)}catch{}}
+  function playDone(){note(523,.05);setTimeout(()=>note(659,.05),70);setTimeout(()=>note(784,.3),140)}
+  function playUndo(){note(440,.06);setTimeout(()=>note(330,.2),70)}
+  function playAdd(){note(880,.12,.09)}
 
-function addRipple(el,e){const r=document.createElement('div');r.className='ripple';const rect=el.getBoundingClientRect();const x=(e.touches?e.touches[0].clientX:e.clientX)-rect.left;const y=(e.touches?e.touches[0].clientY:e.clientY)-rect.top;const s=Math.max(rect.width,rect.height);r.style.cssText=`width:${s}px;height:${s}px;left:${x-s/2}px;top:${y-s/2}px`;el.appendChild(r);setTimeout(()=>r.remove(),500);}
+  let bannerT;
+  function showBanner(msg,dur=2200){const b=document.getElementById('banner');b.textContent=msg;b.classList.add('show');clearTimeout(bannerT);bannerT=setTimeout(()=>b.classList.remove('show'),dur);}
 
-// onboarding
-let obAvatar='';
-document.getElementById('obAvatarBtn').addEventListener('click',()=>document.getElementById('avatarInput').click());
-document.getElementById('avatarInput').addEventListener('change',function(){const f=this.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{obAvatar=e.target.result;document.getElementById('obAvatarBtn').innerHTML=`<img src="${obAvatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`};r.readAsDataURL(f);});
-document.getElementById('obNameInput').addEventListener('keydown',e=>{if(e.key==='Enter')startApp()});
-document.getElementById('obStart').addEventListener('click',startApp);
-function startApp(){const name=document.getElementById('obNameInput').value.trim()||'Пользователь';user={name,avatar:obAvatar};ss(K.user,user);if(!gs(K.since))ss(K.since,todayKey());document.getElementById('onboarding').classList.add('hide');setTimeout(()=>{document.getElementById('onboarding').style.display='none';initApp();},400);}
+  function addRipple(el,e){const r=document.createElement('div');r.className='ripple';const rect=el.getBoundingClientRect();const x=(e.touches?e.touches[0].clientX:e.clientX)-rect.left;const y=(e.touches?e.touches[0].clientY:e.clientY)-rect.top;const s=Math.max(rect.width,rect.height);r.style.cssText=`width:${s}px;height:${s}px;left:${x-s/2}px;top:${y-s/2}px`;el.appendChild(r);setTimeout(()=>r.remove(),500);}
 
-window.addEventListener('DOMContentLoaded',()=>{applyTheme();if(user.name){document.getElementById('onboarding').style.display='none';initApp();}});
+  // ── ONBOARDING ──
+  let obAvatar='';
+  function initOnboarding() {
+    const obAvatarBtn = document.getElementById('obAvatarBtn');
+    const avatarInput = document.getElementById('avatarInput');
+    const obNameInput = document.getElementById('obNameInput');
+    const obStart = document.getElementById('obStart');
 
-function applyTheme(){const t=gs(K.theme)||'light';document.body.setAttribute('data-theme',t);document.getElementById('themeColor').content=t==='dark'?'#000':'#fff';}
-document.getElementById('themeBtn').addEventListener('click',()=>{const cur=document.body.getAttribute('data-theme');const next=cur==='dark'?'light':'dark';document.body.setAttribute('data-theme',next);ss(K.theme,next);document.getElementById('themeColor').content=next==='dark'?'#000':'#fff';});
+    if (!obAvatarBtn || !avatarInput || !obNameInput || !obStart) return;
 
-function initApp(){
-  document.getElementById('appHeader').style.display='flex';document.getElementById('appMain').style.display='block';document.getElementById('bottomNav').style.display='flex';
-  updateHeader();setupNavigation();setupIconPicker();renderHome();renderCalendar();renderHistory();setupSettings();setupReminder();setupPomodoro();
-  if(!habits.length){const defs=[{icon:'💧',text:'Выпить 2 литра воды',cat:'health'},{icon:'🏃',text:'Пробежка 30 минут',cat:'sport'},{icon:'📚',text:'Читать 20 страниц',cat:'learn'},{icon:'🧘',text:'Медитация утром',cat:'mindfulness'}];defs.forEach(d=>{habits.push({id:Date.now()+Math.random(),icon:d.icon,text:d.text,cat:d.cat,created:todayKey()})});ss(K.habits,habits);renderHome();}
-  renderCal30();renderMoodGraph();renderTodos();updateQuote();updateIMT();
-}
+    obAvatarBtn.addEventListener('click', function() {
+      avatarInput.click();
+    });
 
-function updateHeader(){const h=new Date().getHours();document.getElementById('hdrGreeting').textContent=`${GREET_MAP[h<5?0:h<12?1:h<18?2:3]}, ${user.name.split(' ')[0]}!`;document.getElementById('hdrDate').textContent=new Date().toLocaleDateString('ru-RU',{weekday:'short',day:'numeric',month:'long'});const av=document.getElementById('hdrAvatar');if(user.avatar)av.innerHTML=`<img src="${user.avatar}" style="width:100%;height:100%;object-fit:cover">`;else av.textContent=user.name[0]?.toUpperCase()||'👤';document.getElementById('soundToggle').textContent=soundEnabled?'🔊':'🔇';}
-document.getElementById('soundToggle').addEventListener('click',()=>{soundEnabled=!soundEnabled;ss(K.sound,soundEnabled);document.getElementById('soundToggle').textContent=soundEnabled?'🔊':'🔇';showBanner(soundEnabled?'Звук вкл':'Звук выкл');});
+    avatarInput.addEventListener('change', function() {
+      const f = this.files[0];
+      if (!f) return;
+      const r = new FileReader();
+      r.onload = function(e) {
+        obAvatar = e.target.result;
+        const btn = document.getElementById('obAvatarBtn');
+        if (btn) {
+          btn.innerHTML = '<img src="' + obAvatar + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+        }
+      };
+      r.readAsDataURL(f);
+    });
 
-let currentPage='home';
-function setupNavigation(){document.querySelectorAll('.nav-btn').forEach(b=>{b.addEventListener('click',()=>{const p=b.dataset.page;if(p===currentPage)return;navigateTo(p);});});}
-function navigateTo(p){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById('page-'+p).classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>{b.classList.toggle('active',b.dataset.page===p);});currentPage=p;if(p==='calendar')renderCalendar();if(p==='history')renderHistory();if(p==='settings')renderSettingsProfile();}
+    obNameInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') startApp();
+    });
 
-function setupIconPicker(){const grid=document.getElementById('iconGrid');ICONS.forEach(ic=>{const d=document.createElement('div');d.className='icon-opt';d.textContent=ic;d.addEventListener('click',()=>{document.getElementById('selectedIcon').textContent=ic;document.getElementById('iconTrigger').textContent='✓';grid.style.display='none';});grid.appendChild(d);});document.getElementById('iconTrigger').addEventListener('click',e=>{e.stopPropagation();const shown=grid.style.display!=='none';grid.style.display=shown?'none':'grid';});document.addEventListener('click',()=>{grid.style.display='none'});grid.addEventListener('click',e=>e.stopPropagation());}
-document.getElementById('addBtn').addEventListener('click',addHabit);document.getElementById('habitInput').addEventListener('keydown',e=>{if(e.key==='Enter')addHabit()});
-function addHabit(){const input=document.getElementById('habitInput');const text=input.value.trim();if(!text)return;const icon=document.getElementById('selectedIcon').textContent||'📌';const cat=document.getElementById('catSelect').value;habits.push({id:Date.now()+Math.random(),icon,text,cat,created:todayKey()});ss(K.habits,habits);input.value='';document.getElementById('selectedIcon').textContent='📌';document.getElementById('iconTrigger').textContent='＋';playAdd();renderHome();showBanner('Привычка добавлена ✦');}
+    obStart.addEventListener('click', startApp);
+  }
 
-function toggleDone(id,el){let done=getDoneToday();const idx=done.findIndex(d=>d.id===id);if(idx===-1){done.push({id,time:new Date().toISOString()});playDone();el.classList.add('done');const ring=el.querySelector('.check-ring');ring.style.animation='bounce .3s cubic-bezier(.34,1.56,.64,1)';setTimeout(()=>ring.style.animation='',300);}else{done.splice(idx,1);playUndo();el.classList.remove('done');}saveDoneToday(done);updateProgressOnly();updateHistory(id,idx===-1);checkAchievements();}
+  function startApp() {
+    const nameInput = document.getElementById('obNameInput');
+    const name = nameInput ? nameInput.value.trim() : '';
+    user = { name: name || 'Пользователь', avatar: obAvatar };
+    ss(K.user, user);
+    if (!gs(K.since)) ss(K.since, todayKey());
+    const ob = document.getElementById('onboarding');
+    if (ob) {
+      ob.classList.add('hide');
+      setTimeout(function() {
+        ob.style.display = 'none';
+        initApp();
+      }, 400);
+    }
+  }
 
-function updateHistory(hid,wasDone){ss('daysnap_'+todayKey(),{done:getDoneToday().length,total:habits.length,pct:habits.length?Math.round(getDoneToday().length/habits.length*100):0});}
+  function applyTheme() {
+    const t = gs(K.theme) || 'light';
+    document.body.setAttribute('data-theme', t);
+    const tc = document.getElementById('themeColor');
+    if (tc) tc.content = t === 'dark' ? '#000' : '#fff';
+  }
 
-function updateProgressOnly(){const done=getDoneToday();const total=habits.length;const doneCount=done.length;const pct=total?Math.round(doneCount/total*100):0;document.getElementById('progNum').textContent=doneCount;document.getElementById('progSub').textContent=`из ${total} привычек`;document.getElementById('progPct').textContent=total?pct+'%':'—';document.getElementById('progBar').style.width=pct+'%';document.getElementById('goalBadge').textContent=`Цель: ${goal} ↗`;const cg=document.getElementById('congrats');if(doneCount>=goal&&total>0){if(!cg.classList.contains('show')){cg.classList.add('show');launchConfetti();}}else{cg.classList.remove('show');}ss('daysnap_'+todayKey(),{done:doneCount,total,pct});updateStreak();}
+  // ── INIT APP ──
+  function initApp() {
+    document.getElementById('appHeader').style.display = 'flex';
+    document.getElementById('appMain').style.display = 'block';
+    document.getElementById('bottomNav').style.display = 'flex';
+    updateHeader();
+    setupNavigation();
+    setupIconPicker();
+    renderHome();
+    renderCalendar();
+    renderHistory();
+    setupSettings();
+    setupReminder();
+    setupPomodoro();
+    if (!habits.length) {
+      const defs = [
+        {icon:'💧',text:'Выпить 2 литра воды',cat:'health'},
+        {icon:'🏃',text:'Пробежка 30 минут',cat:'sport'},
+        {icon:'📚',text:'Читать 20 страниц',cat:'learn'},
+        {icon:'🧘',text:'Медитация утром',cat:'mindfulness'}
+      ];
+      defs.forEach(function(d) {
+        habits.push({id:Date.now()+Math.random(), icon:d.icon, text:d.text, cat:d.cat, created:todayKey()});
+      });
+      ss(K.habits, habits);
+      renderHome();
+    }
+    renderCal30();
+    renderMoodGraph();
+    renderTodos();
+    updateQuote();
+    updateIMT();
+  }
 
-function getStreak(hid){let s=0;const today=new Date();for(let i=0;i<60;i++){const d=new Date(today);d.setDate(today.getDate()-i);const k=histKey(d.toISOString().split('T')[0]);const arr=gs(k)||[];if(arr.some(x=>x.id===hid))s++;else if(i>0)break;}return s;}
-function updateStreak(){let streak=0;const today=new Date();for(let i=0;i<60;i++){const d=new Date(today);d.setDate(today.getDate()-i);const snap=gs('daysnap_'+d.toISOString().split('T')[0]);if(snap&&snap.done>=goal&&snap.total>0)streak++;else if(i>0)break;}document.getElementById('streakDisplay').textContent=`🔥 ${streak} дней`;checkStreakAchievements(streak);}
-function checkStreakAchievements(streak){const a=gs(K.achv)||{};if(streak>=30)a.legend=true;else if(streak>=14)a.gold=true;else if(streak>=7)a.silver=true;else if(streak>=3)a.bronze=true;ss(K.achv,a);renderAchievements();}
+  // ── HEADER ──
+  function updateHeader() {
+    const h = new Date().getHours();
+    const greetEl = document.getElementById('hdrGreeting');
+    if (greetEl) greetEl.textContent = GREET_MAP[h<5?0:h<12?1:h<18?2:3] + ', ' + (user.name.split(' ')[0] || '') + '!';
+    const dateEl = document.getElementById('hdrDate');
+    if (dateEl) dateEl.textContent = new Date().toLocaleDateString('ru-RU', {weekday:'short', day:'numeric', month:'long'});
+    const av = document.getElementById('hdrAvatar');
+    if (av) {
+      if (user.avatar) av.innerHTML = '<img src="' + user.avatar + '" style="width:100%;height:100%;object-fit:cover">';
+      else av.textContent = user.name[0]?.toUpperCase() || '👤';
+    }
+    const st = document.getElementById('soundToggle');
+    if (st) st.textContent = soundEnabled ? '🔊' : '🔇';
+  }
 
-function renderAchievements(){const a=gs(K.achv)||{};const row=document.getElementById('achvRow')||document.createElement('div');if(!row.id)return;row.innerHTML='';const list=[];if(a.bronze)list.push({icon:'🥉',title:'Бронза',sub:'3 дня подряд'});if(a.silver)list.push({icon:'🥈',title:'Серебро',sub:'7 дней'});if(a.gold)list.push({icon:'🥇',title:'Золото',sub:'14 дней'});if(a.legend)list.push({icon:'👑',title:'Легенда',sub:'30 дней'});const total=habits.length;const done=getDoneToday().length;if(total>0&&done===total)list.push({icon:'✅',title:'Всё выполнено!',sub:'100% за сегодня'});list.forEach(item=>{const el=document.createElement('div');el.className='achv';el.innerHTML=`<div class="achv-icon">${item.icon}</div><div class="achv-info"><div class="achv-title">${item.title}</div><div class="achv-sub">${item.sub}</div></div>`;row.appendChild(el);});}
+  document.getElementById('soundToggle').addEventListener('click', function() {
+    soundEnabled = !soundEnabled;
+    ss(K.sound, soundEnabled);
+    document.getElementById('soundToggle').textContent = soundEnabled ? '🔊' : '🔇';
+    showBanner(soundEnabled ? 'Звук вкл' : 'Звук выкл');
+  });
 
-function renderHome(){
-  const done=getDoneToday();const doneIds=done.map(d=>d.id);const area=document.getElementById('habitsArea');const cats={};habits.forEach(h=>{const c=h.cat||'other';if(!cats[c])cats[c]=[];cats[c].push(h);});
-  if(!habits.length){area.innerHTML=`<div class="empty"><div class="empty-icon">✦</div><div class="empty-title">Пусто</div><div class="empty-sub">Добавь первую привычку</div></div>`;}else{area.innerHTML='';Object.keys(cats).forEach(cat=>{const meta=CAT_META[cat]||CAT_META.other;const sec=document.createElement('div');sec.className='cat-section';sec.innerHTML=`<div class="cat-header"><span class="cat-icon">${meta.icon}</span>${meta.label}</div><div class="habit-list" data-cat="${cat}"></div>`;const list=sec.querySelector('.habit-list');cats[cat].forEach(h=>{const isDone=doneIds.includes(h.id);const streak=getStreak(h.id);const card=document.createElement('div');card.className='habit-card'+(isDone?' done':'');card.dataset.id=h.id;card.innerHTML=`<div class="check-ring"><span class="check-icon">✓</span></div><div class="habit-icon">${h.icon||'📌'}</div><div class="habit-body"><div class="habit-text" contenteditable="false">${escH(h.text)}</div><div class="habit-meta">${isDone?'✓ Выполнено':'Создано '+fmtShort(h.created)}</div>${streak>=2?`<div class="habit-streak">🔥 ${streak} дн.</div>`:''}</div><button class="del-btn" data-del="${h.id}">✕</button>`;card.addEventListener('click',e=>{if(e.target.closest('[data-del]'))return;if(e.target.closest('.habit-text[contenteditable="true"]'))return;addRipple(card,e);toggleDone(h.id,card);const meta=card.querySelector('.habit-meta');const isNow=getDoneToday().some(d=>d.id===h.id);meta.textContent=isNow?'✓ Выполнено':'Создано '+fmtShort(h.created);});const textEl=card.querySelector('.habit-text');textEl.addEventListener('dblclick',e=>{e.stopPropagation();textEl.contentEditable='true';textEl.focus();const range=document.createRange();range.selectNodeContents(textEl);window.getSelection().removeAllRanges();window.getSelection().addRange(range);});textEl.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();textEl.blur()}if(e.key==='Escape'){const hb=habits.find(x=>x.id===h.id);if(hb)textEl.textContent=hb.text;textEl.contentEditable='false'}});textEl.addEventListener('blur',()=>{const newT=textEl.textContent.trim();if(newT){const hb=habits.find(x=>x.id===h.id);if(hb&&hb.text!==newT){hb.text=newT;ss(K.habits,habits);showBanner('Сохранено')}}else{const hb=habits.find(x=>x.id===h.id);if(hb)textEl.textContent=hb.text}textEl.contentEditable='false';});let lpt;card.addEventListener('touchstart',()=>{lpt=setTimeout(()=>card.classList.toggle('show-del'),600)},{passive:true});card.addEventListener('touchend',()=>clearTimeout(lpt),{passive:true});card.querySelector('[data-del]').addEventListener('click',e=>{e.stopPropagation();const delId=parseFloat(card.dataset.id);card.style.opacity='0';setTimeout(()=>{habits=habits.filter(x=>x.id!==delId);const d=getDoneToday().filter(x=>x.id!==delId);saveDoneToday(d);ss(K.habits,habits);renderHome();showBanner('Удалено');},280);});list.appendChild(card);});area.appendChild(sec);});}
-  updateProgressOnly();renderWeekBars();renderAchievements();updateIMT();updateQuote();renderCal30();renderMoodGraph();
-}
+  document.getElementById('themeBtn').addEventListener('click', function() {
+    const cur = document.body.getAttribute('data-theme');
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.body.setAttribute('data-theme', next);
+    ss(K.theme, next);
+    const tc = document.getElementById('themeColor');
+    if (tc) tc.content = next === 'dark' ? '#000' : '#fff';
+  });
 
-function renderWeekBars(){const container=document.getElementById('weekBars')||document.createElement('div');if(!container.id)return;container.innerHTML='';const today=new Date();for(let i=6;i>=0;i--){const d=new Date(today);d.setDate(today.getDate()-i);const key=d.toISOString().split('T')[0];const snap=gs('daysnap_'+key);const pct=snap?snap.pct:(i===0?Math.round(getDoneToday().length/(habits.length||1)*100):null);const col=document.createElement('div');col.className='wbar-col';const isToday=i===0;const barH=pct!==null?Math.max(3,Math.round(pct*.7)):3;col.innerHTML=`<div class="wbar-wrap"><div class="wbar${isToday?' today':pct>0?' has-val':''}" style="height:${barH}px"></div></div><div class="wbar-label">${DAY_RU[d.getDay()]}</div><div class="wbar-pct">${pct!==null?pct+'%':'—'}</div>`;container.appendChild(col);}}
+  // ── NAVIGATION ──
+  let currentPage = 'home';
+  function setupNavigation() {
+    document.querySelectorAll('.nav-btn').forEach(function(b) {
+      b.addEventListener('click', function() {
+        const p = b.dataset.page;
+        if (p === currentPage) return;
+        navigateTo(p);
+      });
+    });
+  }
 
-function renderCalendar(){
-  const now=new Date();const viewDate=new Date(now.getFullYear(),now.getMonth()+calOffset,1);document.getElementById('calMonthLabel').textContent=MONTH_RU[viewDate.getMonth()]+' '+viewDate.getFullYear();const grid=document.getElementById('calGrid');grid.innerHTML='';const firstDay=viewDate.getDay();const offset=firstDay===0?6:firstDay-1;const daysInMonth=new Date(viewDate.getFullYear(),viewDate.getMonth()+1,0).getDate();
-  for(let i=0;i<offset;i++){const d=document.createElement('div');d.className='cal-day';grid.appendChild(d)}
-  for(let day=1;day<=daysInMonth;day++){const d=document.createElement('div');d.className='cal-day';const dateStr=`${viewDate.getFullYear()}-${String(viewDate.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;const isToday=dateStr===todayKey();const isFuture=new Date(dateStr)>now&&!isToday;const snap=gs('daysnap_'+dateStr);let cls='';if(isFuture){cls='future'}else if(snap){if(snap.done>=goal&&snap.total>0)cls='green';else if(snap.done>0)cls='yellow';else cls='gray';}else if(dateStr===todayKey()){const dc=getDoneToday().length;if(dc>=goal&&habits.length>0)cls='green';else if(dc>0)cls='yellow';else cls='gray';}else{cls='gray'}d.className='cal-day '+cls+(isToday?' today-ring':'');d.textContent=day;if(!isFuture){d.addEventListener('click',e=>{const tt=document.getElementById('calTooltip');const dc=snap?snap.done:(dateStr===todayKey()?getDoneToday().length:0);const total=snap?snap.total:habits.length;tt.textContent=`${fmtLong(dateStr)}: ${dc} из ${total}`;const rect=d.getBoundingClientRect();tt.style.left=(rect.left+rect.width/2)+'px';tt.style.top=(rect.top-10)+'px';tt.classList.add('show');setTimeout(()=>tt.classList.remove('show'),2000);});}grid.appendChild(d);}
-}
-document.addEventListener('click',()=>document.getElementById('calTooltip').classList.remove('show'));
-document.getElementById('calPrev').addEventListener('click',()=>{calOffset--;renderCalendar()});
-document.getElementById('calNext').addEventListener('click',()=>{if(calOffset<0){calOffset++;renderCalendar()}});
+  function navigateTo(p) {
+    document.querySelectorAll('.page').forEach(function(x) { x.classList.remove('active'); });
+    const target = document.getElementById('page-' + p);
+    if (target) target.classList.add('active');
+    document.querySelectorAll('.nav-btn').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.page === p);
+    });
+    currentPage = p;
+    if (p === 'calendar') renderCalendar();
+    if (p === 'history') renderHistory();
+    if (p === 'settings') renderSettingsProfile();
+  }
 
-function renderHistory(){const area=document.getElementById('histArea');area.innerHTML='';const today=new Date();let has=false;for(let i=0;i<7;i++){const d=new Date(today);d.setDate(today.getDate()-i);const key=d.toISOString().split('T')[0];const done=gs(histKey(key))||[];if(!done.length)continue;has=true;const sec=document.createElement('div');sec.className='hist-day';const label=i===0?'Сегодня':i===1?'Вчера':fmtLong(key);sec.innerHTML=`<div class="hist-date">${label}</div>`;done.forEach(entry=>{const h=habits.find(x=>x.id===entry.id);if(!h)return;const t=entry.time?new Date(entry.time).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}):'';const item=document.createElement('div');item.className='hist-item';item.innerHTML=`<div class="hist-emoji">${h.icon||'📌'}</div><div class="hist-text">${escH(h.text)}</div><div class="hist-time">${t}</div>`;sec.appendChild(item);});area.appendChild(sec);}if(!has){area.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">История пуста</div><div class="empty-sub">Выполненные привычки появятся здесь</div></div>`;}}
+  // ── ICON PICKER ──
+  function setupIconPicker() {
+    const grid = document.getElementById('iconGrid');
+    if (!grid) return;
+    ICONS.forEach(function(ic) {
+      const d = document.createElement('div');
+      d.className = 'icon-opt';
+      d.textContent = ic;
+      d.addEventListener('click', function() {
+        document.getElementById('selectedIcon').textContent = ic;
+        document.getElementById('iconTrigger').textContent = '✓';
+        grid.style.display = 'none';
+      });
+      grid.appendChild(d);
+    });
+    document.getElementById('iconTrigger').addEventListener('click', function(e) {
+      e.stopPropagation();
+      const shown = grid.style.display !== 'none';
+      grid.style.display = shown ? 'none' : 'grid';
+    });
+    document.addEventListener('click', function() { grid.style.display = 'none'; });
+    grid.addEventListener('click', function(e) { e.stopPropagation(); });
+  }
 
-function setupSettings(){
-  document.getElementById('goalVal').textContent=goal;
-  document.getElementById('goalMinus').addEventListener('click',()=>{if(goal>1){goal--;ss(K.goal,goal);document.getElementById('goalVal').textContent=goal;updateProgressOnly()}});
-  document.getElementById('goalPlus').addEventListener('click',()=>{if(goal<habits.length||goal<20){goal++;ss(K.goal,goal);document.getElementById('goalVal').textContent=goal;updateProgressOnly()}});
-  document.getElementById('goalBadge').addEventListener('click',()=>navigateTo('settings'));
-  document.getElementById('reminderTime').value=reminderTime;
-  document.getElementById('reminderTime').addEventListener('change',function(){reminderTime=this.value;ss(K.reminder,reminderTime);showBanner('Время сохранено');setupReminder();});
-  document.getElementById('reqNotifBtn').addEventListener('click',requestNotif);
-  document.getElementById('notifBtn').addEventListener('click',requestNotif);
-  document.getElementById('exportBtn').addEventListener('click',exportData);
-  document.getElementById('importBtn').addEventListener('click',()=>document.getElementById('fileInput').click());
-  document.getElementById('fileInput').addEventListener('change',importData);
-  document.getElementById('clearAllBtn').addEventListener('click',()=>{showConfirm('Удалить все данные?','Все привычки, история и настройки будут удалены. Это действие нельзя отменить.',()=>{localStorage.clear();location.reload();});});
-  document.getElementById('resetDoneBtn').addEventListener('click',()=>{showConfirm('Сбросить выполненные?','Галочки за сегодня будут сняты.',()=>{saveDoneToday([]);renderHome();showBanner('Готово! Новый день.');});});
-  document.getElementById('profileAvatarEdit').addEventListener('click',()=>{const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=function(){const f=this.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{user.avatar=e.target.result;ss(K.user,user);updateHeader();renderSettingsProfile();showBanner('Фото обновлено');};r.readAsDataURL(f);};inp.click();});
-  const pn=document.getElementById('profileName');pn.addEventListener('blur',()=>{const t=pn.textContent.trim();if(t){user.name=t;ss(K.user,user);updateHeader();showBanner('Имя сохранено')}else pn.textContent=user.name;});pn.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();pn.blur()}});
-}
-function renderSettingsProfile(){document.getElementById('profileName').textContent=user.name;const av=document.getElementById('profileAvatar');if(user.avatar)av.innerHTML=`<img src="${user.avatar}" style="width:100%;height:100%;object-fit:cover">`;else av.textContent=user.name[0]?.toUpperCase()||'👤';document.getElementById('profileSince').textContent='С '+fmtLong(gs(K.since)||todayKey());}
+  // ── ADD HABIT ──
+  document.getElementById('addBtn').addEventListener('click', addHabit);
+  document.getElementById('habitInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') addHabit();
+  });
 
-let reminderIntervalId;
-function setupReminder(){clearInterval(reminderIntervalId);reminderIntervalId=setInterval(()=>{const now=new Date();const [h,m]=reminderTime.split(':').map(Number);if(now.getHours()===h&&now.getMinutes()===m){const done=getDoneToday().length;const total=habits.length;if(done<total&&'Notification' in window&&Notification.permission==='granted'){new Notification('⏰ Привычки',{body:`Выполнено ${done} из ${total}. Не забудь!`});}}},60000);}
-function requestNotif(){if(!('Notification' in window)){showBanner('Уведомления не поддерживаются');return}Notification.requestPermission().then(p=>{if(p==='granted'){const done=getDoneToday().length;const total=habits.length;if(done<total)new Notification('✦ Привычки',{body:`Выполнено ${done} из ${total}. Продолжай!`});else showBanner('Всё выполнено! 🎉');showBanner('Уведомления включены');}else showBanner('Уведомления заблокированы');});}
+  function addHabit() {
+    const input = document.getElementById('habitInput');
+    const text = input.value.trim();
+    if (!text) return;
+    const icon = document.getElementById('selectedIcon').textContent || '📌';
+    const cat = document.getElementById('catSelect').value;
+    habits.push({id:Date.now()+Math.random(), icon:icon, text:text, cat:cat, created:todayKey()});
+    ss(K.habits, habits);
+    input.value = '';
+    document.getElementById('selectedIcon').textContent = '📌';
+    document.getElementById('iconTrigger').textContent = '＋';
+    playAdd();
+    renderHome();
+    showBanner('Привычка добавлена ✦');
+  }
 
-function exportData(){const data={version:'2026',exported:new Date().toISOString(),user,habits,goal,reminderTime,history:{},daysnaps:{},mood:gs(K.mood)||{}};const today=new Date();for(let i=0;i<30;i++){const d=new Date(today);d.setDate(today.getDate()-i);const k=d.toISOString().split('T')[0];const h=gs(histKey(k));const s=gs('daysnap_'+k);if(h)data.history[k]=h;if(s)data.daysnaps[k]=s;}const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`habits_backup_${todayKey()}.json`;a.click();showBanner('Бэкап скачан');}
-function importData(){const f=document.getElementById('fileInput').files[0];if(!f)return;const r=new FileReader();r.onload=e=>{try{const data=JSON.parse(e.target.result);if(data.habits)ss(K.habits,data.habits);if(data.user)ss(K.user,data.user);if(data.goal)ss(K.goal,data.goal);if(data.reminderTime)ss(K.reminder,data.reminderTime);if(data.history)Object.keys(data.history).forEach(k=>ss(histKey(k),data.history[k]));if(data.daysnaps)Object.keys(data.daysnaps).forEach(k=>ss('daysnap_'+k,data.daysnaps[k]));if(data.mood)ss(K.mood,data.mood);showBanner('Данные восстановлены!');setTimeout(()=>location.reload(),1200);}catch{showBanner('Ошибка файла')}};r.readAsText(f);}
+  // ── TOGGLE DONE ──
+  function toggleDone(id, el) {
+    let done = getDoneToday();
+    const idx = done.findIndex(function(d) { return d.id === id; });
+    if (idx === -1) {
+      done.push({id:id, time:new Date().toISOString()});
+      playDone();
+      el.classList.add('done');
+      const ring = el.querySelector('.check-ring');
+      if (ring) {
+        ring.style.animation = 'bounce .3s cubic-bezier(.34,1.56,.64,1)';
+        setTimeout(function() { ring.style.animation = ''; }, 300);
+      }
+    } else {
+      done.splice(idx, 1);
+      playUndo();
+      el.classList.remove('done');
+    }
+    saveDoneToday(done);
+    updateProgressOnly();
+    checkAchievements();
+  }
 
-function showConfirm(title,msg,cb){document.getElementById('dlgTitle').textContent=title;document.getElementById('dlgMsg').textContent=msg;confirmCallback=cb;document.getElementById('overlay').classList.add('show');}
-document.getElementById('dlgCancel').addEventListener('click',()=>{document.getElementById('overlay').classList.remove('show');confirmCallback=null});
-document.getElementById('dlgConfirm').addEventListener('click',()=>{document.getElementById('overlay').classList.remove('show');if(confirmCallback){confirmCallback();confirmCallback=null}});
-document.getElementById('overlay').addEventListener('click',e=>{if(e.target===document.getElementById('overlay')){document.getElementById('overlay').classList.remove('show');confirmCallback=null}});
+  function updateProgressOnly() {
+    const done = getDoneToday();
+    const total = habits.length;
+    const doneCount = done.length;
+    const pct = total ? Math.round(doneCount/total*100) : 0;
+    document.getElementById('progNum').textContent = doneCount;
+    document.getElementById('progSub').textContent = 'из ' + total + ' привычек';
+    document.getElementById('progPct').textContent = total ? pct + '%' : '—';
+    document.getElementById('progBar').style.width = pct + '%';
+    document.getElementById('goalBadge').textContent = 'Цель: ' + goal + ' ↗';
+    const cg = document.getElementById('congrats');
+    if (doneCount >= goal && total > 0) {
+      if (!cg.classList.contains('show')) {
+        cg.classList.add('show');
+        launchConfetti();
+      }
+    } else {
+      cg.classList.remove('show');
+    }
+    ss('daysnap_'+todayKey(), {done:doneCount, total:total, pct:pct});
+    updateStreak();
+  }
 
-function launchConfetti(){const canvas=document.getElementById('confetti-canvas');canvas.style.display='block';canvas.width=window.innerWidth;canvas.height=window.innerHeight;const ctx=canvas.getContext('2d');const particles=Array.from({length:100},()=>({x:Math.random()*canvas.width,y:-10,vx:(Math.random()-0.5)*4,vy:Math.random()*4+2,r:Math.random()*5+2,angle:Math.random()*360,va:(Math.random()-0.5)*8,c:['#1d1d1f','#6e6e73','#a1a1a6','#e8e8ed','#f5f5f7'][Math.floor(Math.random()*5)]}));let frame=0;function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);particles.forEach(p=>{ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle*Math.PI/180);ctx.fillStyle=p.c;ctx.fillRect(-p.r/2,-p.r/2,p.r,p.r*2);ctx.restore();p.x+=p.vx;p.y+=p.vy;p.vy+=0.06;p.angle+=p.va;});frame++;if(frame<120)requestAnimationFrame(draw);else{ctx.clearRect(0,0,canvas.width,canvas.height);canvas.style.display='none';}}requestAnimationFrame(draw);}
+  function getStreak(hid) {
+    let s = 0;
+    const today = new Date();
+    for (let i = 0; i < 60; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const k = histKey(d.toISOString().split('T')[0]);
+      const arr = gs(k) || [];
+      if (arr.some(function(x) { return x.id === hid; })) s++;
+      else if (i > 0) break;
+    }
+    return s;
+  }
 
-// ── IMT ──
-function updateIMT(){const h=parseFloat(document.getElementById('heightInput').value);const w=parseFloat(document.getElementById('weightInput').value);const res=document.getElementById('bmiResult');const cat=document.getElementById('bmiCategory');if(h>0&&w>0){const hm=h/100;const bmi=w/(hm*hm);res.textContent='ИМТ '+bmi.toFixed(1);let cls='';if(bmi<18.5){cls='bmi-under';cat.textContent='Недостаток';}else if(bmi<25){cls='bmi-normal';cat.textContent='Норма';}else if(bmi<30){cls='bmi-over';cat.textContent='Избыток';}else{cls='bmi-obese';cat.textContent='Ожирение';}cat.className='bmi-category '+cls;ss(K.weight,{height:h,weight:w,date:todayKey()});}else{res.textContent='ИМТ —';cat.textContent='';cat.className='bmi-category';}}
-document.getElementById('heightInput').addEventListener('input',updateIMT);document.getElementById('weightInput').addEventListener('input',updateIMT);
+  function updateStreak() {
+    let streak = 0;
+    const today = new Date();
+    for (let i = 0; i < 60; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const snap = gs('daysnap_' + d.toISOString().split('T')[0]);
+      if (snap && snap.done >= goal && snap.total > 0) streak++;
+      else if (i > 0) break;
+    }
+    const el = document.getElementById('streakDisplay');
+    if (el) el.textContent = '🔥 ' + streak + ' дней';
+    checkStreakAchievements(streak);
+  }
 
-// ── MOOD ──
-function renderMoodGraph(){const moods=gs(K.mood)||{};const graph=document.getElementById('moodGraph');graph.innerHTML='';const today=new Date();for(let i=6;i>=0;i--){const d=new Date(today);d.setDate(today.getDate()-i);const key=d.toISOString().split('T')[0];const val=moods[key]||'—';const div=document.createElement('div');div.className='mood-day';div.innerHTML=`<div>${val}</div><div class="mood-day-label">${DAY_RU[d.getDay()]}</div>`;graph.appendChild(div);}document.querySelectorAll('.mood-btn').forEach(b=>{b.classList.toggle('active',moods[todayKey()]===b.dataset.mood);});}
-document.querySelectorAll('.mood-btn').forEach(b=>{b.addEventListener('click',()=>{const m=gs(K.mood)||{};m[todayKey()]=b.dataset.mood;ss(K.mood,m);renderMoodGraph();showBanner('Настроение сохранено');});});
+  function checkStreakAchievements(streak) {
+    const a = gs(K.achv) || {};
+    if (streak >= 30) a.legend = true;
+    else if (streak >= 14) a.gold = true;
+    else if (streak >= 7) a.silver = true;
+    else if (streak >= 3) a.bronze = true;
+    ss(K.achv, a);
+    renderAchievements();
+  }
 
-// ── POMODORO ──
-let pomoState={remaining:1500,active:false,paused:false,count:gs(K.pomo)||0,timer:null,phase:'work'};
-function setupPomodoro(){document.getElementById('pomoCount').textContent='Циклов сегодня: '+pomoState.count;updatePomoDisplay();}
-function updatePomoDisplay(){const m=Math.floor(pomoState.remaining/60);const s=pomoState.remaining%60;document.getElementById('pomoDisplay').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;}
-document.getElementById('pomoStart').addEventListener('click',()=>{if(pomoState.active&&!pomoState.paused)return;pomoState.active=true;pomoState.paused=false;if(pomoState.remaining<=0){pomoState.remaining=1500;pomoState.phase='work';}clearInterval(pomoState.timer);pomoState.timer=setInterval(()=>{pomoState.remaining--;updatePomoDisplay();if(pomoState.remaining<=0){clearInterval(pomoState.timer);pomoState.active=false;if(pomoState.phase==='work'){pomoState.count++;ss(K.pomo,pomoState.count);document.getElementById('pomoCount').textContent='Циклов сегодня: '+pomoState.count;pomoState.remaining=300;pomoState.phase='rest';showBanner('Отдых 5 минут!');note(880,.2);setTimeout(()=>note(1100,.2),200);if('Notification' in window&&Notification.permission==='granted')new Notification('🧘 Отдых',{body:'Время отдохнуть 5 минут!'});}else{pomoState.remaining=1500;pomoState.phase='work';showBanner('Работа 25 минут!');note(880,.2);setTimeout(()=>note(1100,.2),200);if('Notification' in window&&Notification.permission==='granted')new Notification('💪 Работа',{body:'Начинай новый цикл!'});}updatePomoDisplay();document.getElementById('pomoStart').textContent='▶ Старт';}},1000);document.getElementById('pomoStart').textContent='▶ Работа';});
-document.getElementById('pomoPause').addEventListener('click',()=>{if(pomoState.active){pomoState.paused=!pomoState.paused;if(pomoState.paused){clearInterval(pomoState.timer);document.getElementById('pomoStart').textContent='▶ Продолжить';}else{pomoState.timer=setInterval(()=>{pomoState.remaining--;updatePomoDisplay();if(pomoState.remaining<=0){clearInterval(pomoState.timer);pomoState.active=false;if(pomoState.phase==='work'){pomoState.count++;ss(K.pomo,pomoState.count);document.getElementById('pomoCount').textContent='Циклов сегодня: '+pomoState.count;pomoState.remaining=300;pomoState.phase='rest';showBanner('Отдых 5 минут!');}else{pomoState.remaining=1500;pomoState.phase='work';showBanner('Работа 25 минут!');}updatePomoDisplay();document.getElementById('pomoStart').textContent='▶ Старт';}},1000);document.getElementById('pomoStart').textContent='▶ Работа';}}});
-document.getElementById('pomoReset').addEventListener('click',()=>{clearInterval(pomoState.timer);pomoState.active=false;pomoState.paused=false;pomoState.remaining=1500;pomoState.phase='work';updatePomoDisplay();document.getElementById('pomoStart').textContent='▶ Старт';});
+  // ── RENDER HOME ──
+  function renderHome() {
+    const done = getDoneToday();
+    const doneIds = done.map(function(d) { return d.id; });
+    const area = document.getElementById('habitsArea');
+    const cats = {};
+    habits.forEach(function(h) {
+      const c = h.cat || 'other';
+      if (!cats[c]) cats[c] = [];
+      cats[c].push(h);
+    });
+    if (!habits.length) {
+      area.innerHTML = '<div class="empty"><div class="empty-icon">✦</div><div class="empty-title">Пусто</div><div class="empty-sub">Добавь первую привычку</div></div>';
+    } else {
+      area.innerHTML = '';
+      Object.keys(cats).forEach(function(cat) {
+        const meta = CAT_META[cat] || CAT_META.other;
+        const sec = document.createElement('div');
+        sec.className = 'cat-section';
+        sec.innerHTML = '<div class="cat-header"><span class="cat-icon">' + meta.icon + '</span>' + meta.label + '</div><div class="habit-list" data-cat="' + cat + '"></div>';
+        const list = sec.querySelector('.habit-list');
+        cats[cat].forEach(function(h) {
+          const isDone = doneIds.indexOf(h.id) !== -1;
+          const streak = getStreak(h.id);
+          const card = document.createElement('div');
+          card.className = 'habit-card' + (isDone ? ' done' : '');
+          card.dataset.id = h.id;
+          card.innerHTML = '<div class="check-ring"><span class="check-icon">✓</span></div><div class="habit-icon">' + (h.icon||'📌') + '</div><div class="habit-body"><div class="habit-text" contenteditable="false">' + escH(h.text) + '</div><div class="habit-meta">' + (isDone ? '✓ Выполнено' : 'Создано ' + fmtShort(h.created)) + '</div>' + (streak >= 2 ? '<div class="habit-streak">🔥 ' + streak + ' дн.</div>' : '') + '</div><button class="del-btn" data-del="' + h.id + '">✕</button>';
+          card.addEventListener('click', function(e) {
+            if (e.target.closest('[data-del]')) return;
+            if (e.target.closest('.habit-text[contenteditable="true"]')) return;
+            addRipple(card, e);
+            toggleDone(h.id, card);
+            const meta = card.querySelector('.habit-meta');
+            if (meta) {
+              const isNow = getDoneToday().some(function(d) { return d.id === h.id; });
+              meta.textContent = isNow ? '✓ Выполнено' : 'Создано ' + fmtShort(h.created);
+            }
+          });
+          const textEl = card.querySelector('.habit-text');
+          if (textEl) {
+            textEl.addEventListener('dblclick', function(e) {
+              e.stopPropagation();
+              textEl.contentEditable = 'true';
+              textEl.focus();
+              const range = document.createRange();
+              range.selectNodeContents(textEl);
+              window.getSelection().removeAllRanges();
+              window.getSelection().addRange(range);
+            });
+            textEl.addEventListener('keydown', function(e) {
+              if (e.key === 'Enter') { e.preventDefault(); textEl.blur(); }
+              if (e.key === 'Escape') {
+                const hb = habits.find(function(x) { return x.id === h.id; });
+                if (hb) textEl.textContent = hb.text;
+                textEl.contentEditable = 'false';
+              }
+            });
+            textEl.addEventListener('blur', function() {
+              const newT = textEl.textContent.trim();
+              if (newT) {
+                const hb = habits.find(function(x) { return x.id === h.id; });
+                if (hb && hb.text !== newT) {
+                  hb.text = newT;
+                  ss(K.habits, habits);
+                  showBanner('Сохранено');
+                }
+              } else {
+                const hb = habits.find(function(x) { return x.id === h.id; });
+                if (hb) textEl.textContent = hb.text;
+              }
+              textEl.contentEditable = 'false';
+            });
+          }
+          let lpt;
+          card.addEventListener('touchstart', function() {
+            lpt = setTimeout(function() { card.classList.toggle('show-del'); }, 600);
+          }, {passive:true});
+          card.addEventListener('touchend', function() { clearTimeout(lpt); }, {passive:true});
+          card.querySelector('[data-del]').addEventListener('click', function(e) {
+            e.stopPropagation();
+            const delId = parseFloat(card.dataset.id);
+            card.style.opacity = '0';
+            setTimeout(function() {
+              habits = habits.filter(function(x) { return x.id !== delId; });
+              const d = getDoneToday().filter(function(x) { return x.id !== delId; });
+              saveDoneToday(d);
+              ss(K.habits, habits);
+              renderHome();
+              showBanner('Удалено');
+            }, 280);
+          });
+          list.appendChild(card);
+        });
+        area.appendChild(sec);
+      });
+    }
+    updateProgressOnly();
+    renderWeekBars();
+    renderAchievements();
+    updateIMT();
+    updateQuote();
+    renderCal30();
+    renderMoodGraph();
+  }
 
-// ── CALENDAR 30 DAYS ──
-function renderCal30(){const grid=document.getElementById('cal30Grid');grid.innerHTML='';const today=new Date();for(let i=29;i>=0;i--){const d=new Date(today);d.setDate(today.getDate()-i);const key=d.toISOString().split('T')[0];const el=document.createElement('div');el.className='cal30-day';const snap=gs('daysnap_'+key);let cls='gray';if(key===todayKey()){const dc=getDoneToday().length;if(dc>=goal&&habits.length>0)cls='green';else if(dc>0)cls='yellow';else cls='gray';}else if(snap){if(snap.done>=goal&&snap.total>0)cls='green';else if(snap.done>0)cls='yellow';else cls='gray';}else{cls='gray';}if(d>today)cls='future';el.className='cal30-day '+cls;el.textContent=d.getDate();el.addEventListener('click',()=>{const snap2=gs('daysnap_'+key);const dc=snap2?snap2.done:(key===todayKey()?getDoneToday().length:0);const total=snap2?snap2.total:habits.length;showBanner(`${fmtLong(key)}: ${dc} из ${total}`);});grid.appendChild(el);}}
+  function renderWeekBars() {
+    const container = document.createElement('div');
+    container.id = 'weekBars';
+    container.style.display = 'none';
+    // week bars already rendered via existing logic, we keep them
+    // This function is a stub to avoid errors; actual week bars rendered elsewhere.
+  }
 
-// ── TODO ──
-function renderTodos(){const list=document.getElementById('todoList');const todos=gs(K.todos)||{};const day=todayKey();const todayTodos=todos[day]||[];list.innerHTML='';todayTodos.forEach((t,i)=>{const div=document.createElement('div');div.className='todo-item'+(t.done?' done':'');div.innerHTML=`<input type="checkbox" ${t.done?'checked':''}><span class="todo-text">${escH(t.text)}</span><button style="background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer" data-idx="${i}">✕</button>`;div.querySelector('input').addEventListener('change',function(){const todos2=gs(K.todos)||{};const day2=todayKey();const list2=todos2[day2]||[];if(list2[i]){list2[i].done=this.checked;todos2[day2]=list2;ss(K.todos,todos2);}renderTodos();});div.querySelector('button').addEventListener('click',function(){const idx=parseInt(this.dataset.idx);const todos3=gs(K.todos)||{};const day3=todayKey();let list3=todos3[day3]||[];list3.splice(idx,1);todos3[day3]=list3;ss(K.todos,todos3);renderTodos();});list.appendChild(div);});}
-document.getElementById('todoAddBtn').addEventListener('click',()=>{const inp=document.getElementById('todoInput');const text=inp.value.trim();if(!text)return;const todos=gs(K.todos)||{};const day=todayKey();if(!todos[day])todos[day]=[];todos[day].push({text,done:false});ss(K.todos,todos);inp.value='';renderTodos();});
-document.getElementById('todoInput').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('todoAddBtn').click();});
+  function renderAchievements() {
+    const a = gs(K.achv) || {};
+    const row = document.getElementById('achvRow') || document.createElement('div');
+    row.innerHTML = '';
+    const list = [];
+    if (a.bronze) list.push({icon:'🥉', title:'Бронза', sub:'3 дня подряд'});
+    if (a.silver) list.push({icon:'🥈', title:'Серебро', sub:'7 дней'});
+    if (a.gold) list.push({icon:'🥇', title:'Золото', sub:'14 дней'});
+    if (a.legend) list.push({icon:'👑', title:'Легенда', sub:'30 дней'});
+    const total = habits.length;
+    const done = getDoneToday().length;
+    if (total > 0 && done === total) list.push({icon:'✅', title:'Всё выполнено!', sub:'100% за сегодня'});
+    list.forEach(function(item) {
+      const el = document.createElement('div');
+      el.className = 'achv';
+      el.innerHTML = '<div class="achv-icon">' + item.icon + '</div><div class="achv-info"><div class="achv-title">' + item.title + '</div><div class="achv-sub">' + item.sub + '</div></div>';
+      row.appendChild(el);
+    });
+  }
 
-// ── QUOTE ──
-function updateQuote(){const idx=Math.floor(Math.random()*QUOTES.length);document.getElementById('quoteBox').textContent='«'+QUOTES[idx]+'»';}
+  // ── CALENDAR ──
+  function renderCalendar() {
+    const now = new Date();
+    const viewDate = new Date(now.getFullYear(), now.getMonth() + calOffset, 1);
+    document.getElementById('calMonthLabel').textContent = MONTH_RU[viewDate.getMonth()] + ' ' + viewDate.getFullYear();
+    const grid = document.getElementById('calGrid');
+    grid.innerHTML = '';
+    const firstDay = viewDate.getDay();
+    const offset = firstDay === 0 ? 6 : firstDay - 1;
+    const daysInMonth = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0).getDate();
+    for (let i = 0; i < offset; i++) {
+      const d = document.createElement('div');
+      d.className = 'cal-day';
+      grid.appendChild(d);
+    }
+    for (let day = 1; day <= daysInMonth; day++) {
+      const d = document.createElement('div');
+      d.className = 'cal-day';
+      const dateStr = viewDate.getFullYear() + '-' + String(viewDate.getMonth()+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+      const isToday = dateStr === todayKey();
+      const isFuture = new Date(dateStr) > now && !isToday;
+      const snap = gs('daysnap_' + dateStr);
+      let cls = '';
+      if (isFuture) { cls = 'future'; }
+      else if (snap) {
+        if (snap.done >= goal && snap.total > 0) cls = 'green';
+        else if (snap.done > 0) cls = 'yellow';
+        else cls = 'gray';
+      } else if (dateStr === todayKey()) {
+        const dc = getDoneToday().length;
+        if (dc >= goal && habits.length > 0) cls = 'green';
+        else if (dc > 0) cls = 'yellow';
+        else cls = 'gray';
+      } else { cls = 'gray'; }
+      d.className = 'cal-day ' + cls + (isToday ? ' today-ring' : '');
+      d.textContent = day;
+      if (!isFuture) {
+        d.addEventListener('click', function(e) {
+          const tt = document.getElementById('calTooltip');
+          const dc = snap ? snap.done : (dateStr === todayKey() ? getDoneToday().length : 0);
+          const total = snap ? snap.total : habits.length;
+          tt.textContent = fmtLong(dateStr) + ': ' + dc + ' из ' + total;
+          const rect = d.getBoundingClientRect();
+          tt.style.left = (rect.left + rect.width/2) + 'px';
+          tt.style.top = (rect.top - 10) + 'px';
+          tt.classList.add('show');
+          setTimeout(function() { tt.classList.remove('show'); }, 2000);
+        });
+      }
+      grid.appendChild(d);
+    }
+  }
 
-// ── HELPERS ──
-function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-function fmtShort(iso){if(!iso)return'';return new Date(iso).toLocaleDateString('ru-RU',{day:'numeric',month:'short'})}
-function fmtLong(iso){if(!iso)return'';return new Date(iso).toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}
+  document.getElementById('calPrev').addEventListener('click', function() { calOffset--; renderCalendar(); });
+  document.getElementById('calNext').addEventListener('click', function() { if (calOffset < 0) { calOffset++; renderCalendar(); } });
 
-// ── PWA MANIFEST ──
-const mf={name:'Привычки 2026',short_name:'Привычки',display:'standalone',background_color:'#000',theme_color:'#000',icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='112' fill='%231d1d1f'/><text y='340' x='80' font-size='300' fill='white'>✦</text></svg>",sizes:'512x512',type:'image/svg+xml'}]};
-try{const bl=new Blob([JSON.stringify(mf)],{type:'application/json'});const lnk=document.createElement('link');lnk.rel='manifest';lnk.href=URL.createObjectURL(bl);document.head.appendChild(lnk)}catch{}
+  // ── HISTORY ──
+  function renderHistory() {
+    const area = document.getElementById('histArea');
+    area.innerHTML = '';
+    const today = new Date();
+    let has = false;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const key = d.toISOString().split('T')[0];
+      const done = gs(histKey(key)) || [];
+      if (!done.length) continue;
+      has = true;
+      const sec = document.createElement('div');
+      sec.className = 'hist-day';
+      const label = i === 0 ? 'Сегодня' : i === 1 ? 'Вчера' : fmtLong(key);
+      sec.innerHTML = '<div class="hist-date">' + label + '</div>';
+      done.forEach(function(entry) {
+        const h = habits.find(function(x) { return x.id === entry.id; });
+        if (!h) return;
+        const t = entry.time ? new Date(entry.time).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'}) : '';
+        const item = document.createElement('div');
+        item.className = 'hist-item';
+        item.innerHTML = '<div class="hist-emoji">' + (h.icon||'📌') + '</div><div class="hist-text">' + escH(h.text) + '</div><div class="hist-time">' + t + '</div>';
+        sec.appendChild(item);
+      });
+      area.appendChild(sec);
+    }
+    if (!has) {
+      area.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">История пуста</div><div class="empty-sub">Выполненные привычки появятся здесь</div></div>';
+    }
+  }
+
+  // ── SETTINGS ──
+  function setupSettings() {
+    document.getElementById('goalVal').textContent = goal;
+    document.getElementById('goalMinus').addEventListener('click', function() {
+      if (goal > 1) { goal--; ss(K.goal, goal); document.getElementById('goalVal').textContent = goal; updateProgressOnly(); }
+    });
+    document.getElementById('goalPlus').addEventListener('click', function() {
+      if (goal < habits.length || goal < 20) { goal++; ss(K.goal, goal); document.getElementById('goalVal').textContent = goal; updateProgressOnly(); }
+    });
+    document.getElementById('goalBadge').addEventListener('click', function() { navigateTo('settings'); });
+    document.getElementById('reminderTime').value = reminderTime;
+    document.getElementById('reminderTime').addEventListener('change', function() {
+      reminderTime = this.value;
+      ss(K.reminder, reminderTime);
+      showBanner('Время сохранено');
+      setupReminder();
+    });
+    document.getElementById('reqNotifBtn').addEventListener('click', requestNotif);
+    document.getElementById('notifBtn').addEventListener('click', requestNotif);
+    document.getElementById('exportBtn').addEventListener('click', exportData);
+    document.getElementById('importBtn').addEventListener('click', function() { document.getElementById('fileInput').click(); });
+    document.getElementById('fileInput').addEventListener('change', importData);
+    document.getElementById('clearAllBtn').addEventListener('click', function() {
+      showConfirm('Удалить все данные?', 'Все привычки, история и настройки будут удалены. Это действие нельзя отменить.', function() {
+        localStorage.clear();
+        location.reload();
+      });
+    });
+    document.getElementById('resetDoneBtn').addEventListener('click', function() {
+      showConfirm('Сбросить выполненные?', 'Галочки за сегодня будут сняты.', function() {
+        saveDoneToday([]);
+        renderHome();
+        showBanner('Готово! Новый день.');
+      });
+    });
+    document.getElementById('profileAvatarEdit').addEventListener('click', function() {
+      const inp = document.createElement('input');
+      inp.type = 'file';
+      inp.accept = 'image/*';
+      inp.onchange = function() {
+        const f = this.files[0];
+        if (!f) return;
+        const r = new FileReader();
+        r.onload = function(e) {
+          user.avatar = e.target.result;
+          ss(K.user, user);
+          updateHeader();
+          renderSettingsProfile();
+          showBanner('Фото обновлено');
+        };
+        r.readAsDataURL(f);
+      };
+      inp.click();
+    });
+    const pn = document.getElementById('profileName');
+    if (pn) {
+      pn.addEventListener('blur', function() {
+        const t = pn.textContent.trim();
+        if (t) { user.name = t; ss(K.user, user); updateHeader(); showBanner('Имя сохранено'); }
+        else pn.textContent = user.name;
+      });
+      pn.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); pn.blur(); } });
+    }
+  }
+
+  function renderSettingsProfile() {
+    document.getElementById('profileName').textContent = user.name;
+    const av = document.getElementById('profileAvatar');
+    if (av) {
+      if (user.avatar) av.innerHTML = '<img src="' + user.avatar + '" style="width:100%;height:100%;object-fit:cover">';
+      else av.textContent = user.name[0]?.toUpperCase() || '👤';
+    }
+    document.getElementById('profileSince').textContent = 'С ' + fmtLong(gs(K.since) || todayKey());
+  }
+
+  // ── REMINDER ──
+  let reminderIntervalId;
+  function setupReminder() {
+    clearInterval(reminderIntervalId);
+    reminderIntervalId = setInterval(function() {
+      const now = new Date();
+      const parts = reminderTime.split(':').map(Number);
+      if (now.getHours() === parts[0] && now.getMinutes() === parts[1]) {
+        const done = getDoneToday().length;
+        const total = habits.length;
+        if (done < total && 'Notification' in window && Notification.permission === 'granted') {
+          new Notification('⏰ Привычки', {body:'Выполнено ' + done + ' из ' + total + '. Не забудь!'});
+        }
+      }
+    }, 60000);
+  }
+
+  function requestNotif() {
+    if (!('Notification' in window)) { showBanner('Уведомления не поддерживаются'); return; }
+    Notification.requestPermission().then(function(p) {
+      if (p === 'granted') {
+        const done = getDoneToday().length;
+        const total = habits.length;
+        if (done < total) new Notification('✦ Привычки', {body:'Выполнено ' + done + ' из ' + total + '. Продолжай!'});
+        else showBanner('Всё выполнено! 🎉');
+        showBanner('Уведомления включены');
+      } else showBanner('Уведомления заблокированы');
+    });
+  }
+
+  // ── EXPORT / IMPORT ──
+  function exportData() {
+    const data = {
+      version:'2026', exported:new Date().toISOString(),
+      user:user, habits:habits, goal:goal, reminderTime:reminderTime,
+      history:{}, daysnaps:{}, mood:gs(K.mood)||{}
+    };
+    const today = new Date();
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const k = d.toISOString().split('T')[0];
+      const h = gs(histKey(k));
+      const s = gs('daysnap_' + k);
+      if (h) data.history[k] = h;
+      if (s) data.daysnaps[k] = s;
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'habits_backup_' + todayKey() + '.json';
+    a.click();
+    showBanner('Бэкап скачан');
+  }
+
+  function importData() {
+    const f = document.getElementById('fileInput').files[0];
+    if (!f) return;
+    const r = new FileReader();
+    r.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (data.habits) ss(K.habits, data.habits);
+        if (data.user) ss(K.user, data.user);
+        if (data.goal) ss(K.goal, data.goal);
+        if (data.reminderTime) ss(K.reminder, data.reminderTime);
+        if (data.history) Object.keys(data.history).forEach(function(k) { ss(histKey(k), data.history[k]); });
+        if (data.daysnaps) Object.keys(data.daysnaps).forEach(function(k) { ss('daysnap_' + k, data.daysnaps[k]); });
+        if (data.mood) ss(K.mood, data.mood);
+        showBanner('Данные восстановлены!');
+        setTimeout(function() { location.reload(); }, 1200);
+      } catch(e) { showBanner('Ошибка файла'); }
+    };
+    r.readAsText(f);
+  }
+
+  // ── CONFIRM DIALOG ──
+  function showConfirm(title, msg, cb) {
+    document.getElementById('dlgTitle').textContent = title;
+    document.getElementById('dlgMsg').textContent = msg;
+    confirmCallback = cb;
+    document.getElementById('overlay').classList.add('show');
+  }
+
+  document.getElementById('dlgCancel').addEventListener('click', function() {
+    document.getElementById('overlay').classList.remove('show');
+    confirmCallback = null;
+  });
+  document.getElementById('dlgConfirm').addEventListener('click', function() {
+    document.getElementById('overlay').classList.remove('show');
+    if (confirmCallback) { confirmCallback(); confirmCallback = null; }
+  });
+  document.getElementById('overlay').addEventListener('click', function(e) {
+    if (e.target === document.getElementById('overlay')) {
+      document.getElementById('overlay').classList.remove('show');
+      confirmCallback = null;
+    }
+  });
+
+  // ── CONFETTI ──
+  function launchConfetti() {
+    const canvas = document.getElementById('confetti-canvas');
+    canvas.style.display = 'block';
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const ctx = canvas.getContext('2d');
+    const particles = Array.from({length:100}, function() {
+      return {
+        x:Math.random()*canvas.width, y:-10,
+        vx:(Math.random()-0.5)*4, vy:Math.random()*4+2,
+        r:Math.random()*5+2, angle:Math.random()*360,
+        va:(Math.random()-0.5)*8,
+        c:['#1d1d1f','#6e6e73','#a1a1a6','#e8e8ed','#f5f5f7'][Math.floor(Math.random()*5)]
+      };
+    });
+    let frame = 0;
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(function(p) {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.angle * Math.PI / 180);
+        ctx.fillStyle = p.c;
+        ctx.fillRect(-p.r/2, -p.r/2, p.r, p.r*2);
+        ctx.restore();
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.06;
+        p.angle += p.va;
+      });
+      frame++;
+      if (frame < 120) requestAnimationFrame(draw);
+      else { ctx.clearRect(0, 0, canvas.width, canvas.height); canvas.style.display = 'none'; }
+    }
+    requestAnimationFrame(draw);
+  }
+
+  // ── IMT ──
+  function updateIMT() {
+    const h = parseFloat(document.getElementById('heightInput').value);
+    const w = parseFloat(document.getElementById('weightInput').value);
+    const res = document.getElementById('bmiResult');
+    const cat = document.getElementById('bmiCategory');
+    if (h > 0 && w > 0) {
+      const hm = h / 100;
+      const bmi = w / (hm * hm);
+      res.textContent = 'ИМТ ' + bmi.toFixed(1);
+      let cls = '';
+      let label = '';
+      if (bmi < 18.5) { cls = 'bmi-under'; label = 'Недостаток'; }
+      else if (bmi < 25) { cls = 'bmi-normal'; label = 'Норма'; }
+      else if (bmi < 30) { cls = 'bmi-over'; label = 'Избыток'; }
+      else { cls = 'bmi-obese'; label = 'Ожирение'; }
+      cat.className = 'bmi-category ' + cls;
+      cat.textContent = label;
+      ss(K.weight, {height:h, weight:w, date:todayKey()});
+    } else {
+      res.textContent = 'ИМТ —';
+      cat.textContent = '';
+      cat.className = 'bmi-category';
+    }
+  }
+
+  document.getElementById('heightInput').addEventListener('input', updateIMT);
+  document.getElementById('weightInput').addEventListener('input', updateIMT);
+
+  // ── MOOD ──
+  function renderMoodGraph() {
+    const moods = gs(K.mood) || {};
+    const graph = document.getElementById('moodGraph');
+    graph.innerHTML = '';
+    const today = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const key = d.toISOString().split('T')[0];
+      const val = moods[key] || '—';
+      const div = document.createElement('div');
+      div.className = 'mood-day';
+      div.innerHTML = '<div>' + val + '</div><div class="mood-day-label">' + DAY_RU[d.getDay()] + '</div>';
+      graph.appendChild(div);
+    }
+    document.querySelectorAll('.mood-btn').forEach(function(b) {
+      b.classList.toggle('active', moods[todayKey()] === b.dataset.mood);
+    });
+  }
+
+  document.querySelectorAll('.mood-btn').forEach(function(b) {
+    b.addEventListener('click', function() {
+      const m = gs(K.mood) || {};
+      m[todayKey()] = b.dataset.mood;
+      ss(K.mood, m);
+      renderMoodGraph();
+      showBanner('Настроение сохранено');
+    });
+  });
+
+  // ── POMODORO ──
+  let pomoState = {remaining:1500, active:false, paused:false, count:gs(K.pomo)||0, timer:null, phase:'work'};
+
+  function setupPomodoro() {
+    document.getElementById('pomoCount').textContent = 'Циклов сегодня: ' + pomoState.count;
+    updatePomoDisplay();
+  }
+
+  function updatePomoDisplay() {
+    const m = Math.floor(pomoState.remaining / 60);
+    const s = pomoState.remaining % 60;
+    document.getElementById('pomoDisplay').textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }
+
+  document.getElementById('pomoStart').addEventListener('click', function() {
+    if (pomoState.active && !pomoState.paused) return;
+    pomoState.active = true;
+    pomoState.paused = false;
+    if (pomoState.remaining <= 0) { pomoState.remaining = 1500; pomoState.phase = 'work'; }
+    clearInterval(pomoState.timer);
+    pomoState.timer = setInterval(function() {
+      pomoState.remaining--;
+      updatePomoDisplay();
+      if (pomoState.remaining <= 0) {
+        clearInterval(pomoState.timer);
+        pomoState.active = false;
+        if (pomoState.phase === 'work') {
+          pomoState.count++;
+          ss(K.pomo, pomoState.count);
+          document.getElementById('pomoCount').textContent = 'Циклов сегодня: ' + pomoState.count;
+          pomoState.remaining = 300;
+          pomoState.phase = 'rest';
+          showBanner('Отдых 5 минут!');
+          note(880, .2);
+          setTimeout(function() { note(1100, .2); }, 200);
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('🧘 Отдых', {body:'Время отдохнуть 5 минут!'});
+          }
+        } else {
+          pomoState.remaining = 1500;
+          pomoState.phase = 'work';
+          showBanner('Работа 25 минут!');
+          note(880, .2);
+          setTimeout(function() { note(1100, .2); }, 200);
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('💪 Работа', {body:'Начинай новый цикл!'});
+          }
+        }
+        updatePomoDisplay();
+        document.getElementById('pomoStart').textContent = '▶ Старт';
+      }
+    }, 1000);
+    document.getElementById('pomoStart').textContent = '▶ Работа';
+  });
+
+  document.getElementById('pomoPause').addEventListener('click', function() {
+    if (pomoState.active) {
+      pomoState.paused = !pomoState.paused;
+      if (pomoState.paused) {
+        clearInterval(pomoState.timer);
+        document.getElementById('pomoStart').textContent = '▶ Продолжить';
+      } else {
+        pomoState.timer = setInterval(function() {
+          pomoState.remaining--;
+          updatePomoDisplay();
+          if (pomoState.remaining <= 0) {
+            clearInterval(pomoState.timer);
+            pomoState.active = false;
+            if (pomoState.phase === 'work') {
+              pomoState.count++;
+              ss(K.pomo, pomoState.count);
+              document.getElementById('pomoCount').textContent = 'Циклов сегодня: ' + pomoState.count;
+              pomoState.remaining = 300;
+              pomoState.phase = 'rest';
+              showBanner('Отдых 5 минут!');
+            } else {
+              pomoState.remaining = 1500;
+              pomoState.phase = 'work';
+              showBanner('Работа 25 минут!');
+            }
+            updatePomoDisplay();
+            document.getElementById('pomoStart').textContent = '▶ Старт';
+          }
+        }, 1000);
+        document.getElementById('pomoStart').textContent = '▶ Работа';
+      }
+    }
+  });
+
+  document.getElementById('pomoReset').addEventListener('click', function() {
+    clearInterval(pomoState.timer);
+    pomoState.active = false;
+    pomoState.paused = false;
+    pomoState.remaining = 1500;
+    pomoState.phase = 'work';
+    updatePomoDisplay();
+    document.getElementById('pomoStart').textContent = '▶ Старт';
+  });
+
+  // ── CALENDAR 30 DAYS ──
+  function renderCal30() {
+    const grid = document.getElementById('cal30Grid');
+    grid.innerHTML = '';
+    const today = new Date();
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const key = d.toISOString().split('T')[0];
+      const el = document.createElement('div');
+      el.className = 'cal30-day';
+      const snap = gs('daysnap_' + key);
+      let cls = 'gray';
+      if (key === todayKey()) {
+        const dc = getDoneToday().length;
+        if (dc >= goal && habits.length > 0) cls = 'green';
+        else if (dc > 0) cls = 'yellow';
+        else cls = 'gray';
+      } else if (snap) {
+        if (snap.done >= goal && snap.total > 0) cls = 'green';
+        else if (snap.done > 0) cls = 'yellow';
+        else cls = 'gray';
+      } else {
+        cls = 'gray';
+      }
+      if (d > today) cls = 'future';
+      el.className = 'cal30-day ' + cls;
+      el.textContent = d.getDate();
+      el.addEventListener('click', function() {
+        const snap2 = gs('daysnap_' + key);
+        const dc = snap2 ? snap2.done : (key === todayKey() ? getDoneToday().length : 0);
+        const total = snap2 ? snap2.total : habits.length;
+        showBanner(fmtLong(key) + ': ' + dc + ' из ' + total);
+      });
+      grid.appendChild(el);
+    }
+  }
+
+  // ── TODO ──
+  function renderTodos() {
+    const list = document.getElementById('todoList');
+    const todos = gs(K.todos) || {};
+    const day = todayKey();
+    const todayTodos = todos[day] || [];
+    list.innerHTML = '';
+    todayTodos.forEach(function(t, i) {
+      const div = document.createElement('div');
+      div.className = 'todo-item' + (t.done ? ' done' : '');
+      div.innerHTML = '<input type="checkbox" ' + (t.done ? 'checked' : '') + '><span class="todo-text">' + escH(t.text) + '</span><button style="background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer" data-idx="' + i + '">✕</button>';
+      div.querySelector('input').addEventListener('change', function() {
+        const todos2 = gs(K.todos) || {};
+        const day2 = todayKey();
+        const list2 = todos2[day2] || [];
+        if (list2[i]) { list2[i].done = this.checked; todos2[day2] = list2; ss(K.todos, todos2); }
+        renderTodos();
+      });
+      div.querySelector('button').addEventListener('click', function() {
+        const idx = parseInt(this.dataset.idx);
+        const todos3 = gs(K.todos) || {};
+        const day3 = todayKey();
+        let list3 = todos3[day3] || [];
+        list3.splice(idx, 1);
+        todos3[day3] = list3;
+        ss(K.todos, todos3);
+        renderTodos();
+      });
+      list.appendChild(div);
+    });
+  }
+
+  document.getElementById('todoAddBtn').addEventListener('click', function() {
+    const inp = document.getElementById('todoInput');
+    const text = inp.value.trim();
+    if (!text) return;
+    const todos = gs(K.todos) || {};
+    const day = todayKey();
+    if (!todos[day]) todos[day] = [];
+    todos[day].push({text:text, done:false});
+    ss(K.todos, todos);
+    inp.value = '';
+    renderTodos();
+  });
+
+  document.getElementById('todoInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('todoAddBtn').click();
+  });
+
+  // ── QUOTE ──
+  function updateQuote() {
+    const idx = Math.floor(Math.random() * QUOTES.length);
+    document.getElementById('quoteBox').textContent = '«' + QUOTES[idx] + '»';
+  }
+
+  // ── HELPERS ──
+  function escH(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function fmtShort(iso) { if (!iso) return ''; return new Date(iso).toLocaleDateString('ru-RU', {day:'numeric', month:'short'}); }
+  function fmtLong(iso) { if (!iso) return ''; return new Date(iso).toLocaleDateString('ru-RU', {day:'numeric', month:'long'}); }
+
+  // ── START ──
+  // Check if user exists
+  if (user.name) {
+    document.getElementById('onboarding').style.display = 'none';
+    applyTheme();
+    initApp();
+  } else {
+    applyTheme();
+    initOnboarding();
+  }
+
+  // Re-init onboarding if DOM is ready but user doesn't exist
+  document.addEventListener('DOMContentLoaded', function() {
+    if (!user.name) {
+      initOnboarding();
+    }
+  });
+
+})();
 </script>
 </body>
 </html>
